@@ -8,6 +8,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 
@@ -19,24 +20,28 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
-
-      - name: Descomprimir ZIP
+      - name: Descomprimir proyecto
         run: |
-          ls -la
           unzip -o *.zip -d project/
-          echo "--- Estructura ---"
-          find project/ -maxdepth 4 -type f | head -40
+          ls project/
+          ls project/JaviHotspot/
+
+      - name: Instalar Gradle 8.10
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.10.2'
+
+      - name: Instalar SDK de Android necesario
+        run: |
+          sdkmanager "platforms;android-36" "build-tools;35.0.0"
 
       - name: Build APK
-        run: |
-          cd project/JaviHotspot
-          gradle assembleDebug --stacktrace
+        working-directory: project/JaviHotspot
+        run: gradle assembleDebug --no-daemon --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: AutoHotspot-debug
-          path: project/**/app/build/outputs/apk/debug/app-debug.apk
+          path: project/JaviHotspot/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 30
