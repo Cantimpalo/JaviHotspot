@@ -28,18 +28,28 @@ jobs:
         with:
           gradle-version: '8.10.2'
 
-      - name: Descomprimir proyecto
-        run: unzip -o *.zip -d project/
+      - name: Descomprimir y localizar proyecto
+        run: |
+          unzip -o *.zip -d project/
+          echo "=== Estructura ==="
+          find project/ -name "build.gradle" | head -5
+          find project/ -name "settings.gradle" | head -5
 
       - name: Build APK
-        working-directory: project/JaviHotspot
-        env:
-          ANDROID_HOME: /usr/local/lib/android/sdk
-        run: gradle assembleDebug --no-daemon --stacktrace 2>&1 | tail -60
+        run: |
+          PROJDIR=$(find project/ -name "settings.gradle" | head -1 | xargs dirname)
+          echo "Directorio: $PROJDIR"
+          cd "$PROJDIR"
+          gradle assembleDebug --no-daemon --stacktrace
+
+      - name: Buscar y subir APK
+        run: |
+          echo "APKs generados:"
+          find project/ -name "*.apk"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: AutoHotspot-debug
-          path: project/JaviHotspot/app/build/outputs/apk/debug/app-debug.apk
+          path: "project/**/*.apk"
           retention-days: 30
