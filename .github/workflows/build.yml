@@ -19,31 +19,24 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Buscar y descomprimir ZIP
-        run: |
-          echo "Archivos en el repo:"
-          ls -la
-          ZIP=$(find . -name "*.zip" | head -1)
-          echo "ZIP encontrado: $ZIP"
-          unzip -o "$ZIP" -d extracted/
-          echo "Contenido extraído:"
-          ls extracted/
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
 
-      - name: Make gradlew executable
+      - name: Descomprimir ZIP
         run: |
-          find extracted/ -name "gradlew" -exec chmod +x {} \;
+          ls -la
+          unzip -o *.zip -d project/
+          echo "--- Estructura ---"
+          find project/ -maxdepth 4 -type f | head -40
 
       - name: Build APK
         run: |
-          GRADLEW=$(find extracted/ -name "gradlew" | head -1)
-          PROJECTDIR=$(dirname "$GRADLEW")
-          echo "Compilando en: $PROJECTDIR"
-          cd "$PROJECTDIR"
-          ./gradlew assembleDebug --stacktrace
+          cd project/JaviHotspot
+          gradle assembleDebug --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: AutoHotspot-debug
-          path: "**/app/build/outputs/apk/debug/app-debug.apk"
+          path: project/**/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 30
